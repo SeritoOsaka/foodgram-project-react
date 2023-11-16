@@ -1,1 +1,1 @@
-# praktikum_new_diplom
+Проверить работу сайта: seritofood.hopto.org
