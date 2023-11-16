@@ -1,10 +1,8 @@
-import base64
-
-from django.core.files.base import ContentFile
+from django.db import transaction
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
-from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers, validators
+from drf_extra_fields.fields import Base64ImageField
 
 from users.models import User, Subscribe
 from recipes.models import (
@@ -14,7 +12,6 @@ from recipes.models import (
     IngredientRecipe,
     Favorite,
     ShoppingCart,
-    TagRecipe,
     MIN_COOKING_TIME,
     MAX_COOKING_TIME,
     MIN_ING_AMOUNT,
@@ -22,7 +19,7 @@ from recipes.models import (
 )
 
 
-class CustomUserSerializer(UserSerializer):
+class SubscriptionStatusSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -39,20 +36,8 @@ class CustomUserSerializer(UserSerializer):
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return Subscribe.objects.filter(
-                user=request.user,
-                author=obj
-            ).exists()
+            return obj.subscriptions.filter(user=request.user).exists()
         return False
-
-
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-        return super().to_internal_value(data)
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -89,16 +74,15 @@ class IngredientRecipeCreateSerializer(serializers.ModelSerializer):
         model = IngredientRecipe
 
     def validate_amount(self, value):
-        if value < MIN_ING_AMOUNT or value > MAX_ING_AMOUNT:
+        if not MIN_ING_AMOUNT < value < MAX_ING_AMOUNT:
             raise serializers.ValidationError(
-                'Нужно указать кол-во от 1 до 5000!'
-            )
+                'Нужно указать кол-во от 1 до 5000!')
         return value
 
 
 class RecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
-    author = CustomUserSerializer(read_only=True)
+    author = SubscriptionStatusSerializer(read_only=True)
     ingredients = IngredientRecipeSerializer(
         many=True, source='recipe_ingredients'
     )
@@ -141,7 +125,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         many=True,
         required=True
     )
-    author = CustomUserSerializer(read_only=True)
+    author = SubscriptionStatusSerializer(read_only=True)
     ingredients = IngredientRecipeCreateSerializer(many=True, required=True)
     image = Base64ImageField(max_length=None, use_url=True)
     cooking_time = serializers.IntegerField(write_only=True)
@@ -179,14 +163,15 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Нужно выбрать хотя бы 1 ингредиент!'
             )
-        unique_ings = []
+        unique_ingredients = []
         for ingredient in ingredients:
-            ing = get_object_or_404(Ingredient, id=ingredient.get('id'))
-            if ing in unique_ings:
+            ingredients = get_object_or_404(Ingredient,
+                                            id=ingredient.get('id'))
+            if ingredients in unique_ingredients:
                 raise serializers.ValidationError(
                     'Не стоит добавлять один и тот же ингредиент много раз!'
                 )
-            unique_ings.append(ing)
+            unique_ingredients.append(ingredients)
         return attrs
 
     def validate_tags(self, tags):
@@ -204,19 +189,20 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
         return tags
 
     def create_tags_recipe(self, tags, recipe):
-        for tag in tags:
-            TagRecipe.objects.create(
-                tag_id=tag.id,
-                recipe=recipe
-            )
+        recipe.tags.set(tags)
 
     def create_ingredients_recipe(self, ingredients, recipe):
-        for ingredient in ingredients:
-            IngredientRecipe.objects.create(
+        ingredient_instances = [
+            IngredientRecipe(
                 ingredient_id=ingredient.get('id'),
                 amount=ingredient.get('amount'),
                 recipe=recipe
             )
+            for ingredient in ingredients
+        ]
+
+        with transaction.atomic():
+            IngredientRecipe.objects.bulk_create(ingredient_instances)
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
@@ -249,19 +235,6 @@ class RecipeCutSerializer(serializers.ModelSerializer):
         model = Recipe
 
 
-class CustomUserCreateSerializer(UserCreateSerializer):
-    class Meta:
-        fields = (
-            'username',
-            'id',
-            'password',
-            'email',
-            'first_name',
-            'last_name',
-        )
-        model = User
-
-
 class SubscribeSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
@@ -281,13 +254,15 @@ class SubscribeSerializer(serializers.ModelSerializer):
         model = User
 
     def get_recipes(self, obj):
-        recipes_limit = self.context.get('request').query_params.get(
-            'recipes_limit'
-        )
+        recipes_limit = (
+            self.context.get('request').query_params.get('recipes_limit'))
         recipes = obj.recipes.all()
         if recipes_limit:
-            recipes = recipes[:int(recipes_limit)]
-            return RecipeCutSerializer(recipes, many=True).data
+            try:
+                recipes = recipes[:int(recipes_limit)]
+            except ValueError:
+                recipes = obj.recipes.all()
+        return RecipeCutSerializer(recipes, many=True).data
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')

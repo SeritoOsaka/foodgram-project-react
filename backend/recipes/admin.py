@@ -7,7 +7,6 @@ from .models import (
     Tag,
     Recipe,
     IngredientRecipe,
-    TagRecipe,
     Favorite,
     ShoppingCart
 )
@@ -53,26 +52,6 @@ class TagAdmin(admin.ModelAdmin):
     )
 
 
-class TagRecipeForm(BaseInlineFormSet):
-
-    def clean(self):
-        super(TagRecipeForm, self).clean()
-        for form in self.forms:
-            if not hasattr(form, 'cleaned_data'):
-                continue
-            data = form.cleaned_data
-            if data.get('DELETE'):
-                raise ValidationError(
-                    'Нельзя удалять все теги из рецепта даже в админке!'
-                )
-
-
-class TagRecipeInLine(admin.TabularInline):
-    model = TagRecipe
-    min_num = 1
-    formset = TagRecipeForm
-
-
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
@@ -83,7 +62,7 @@ class RecipeAdmin(admin.ModelAdmin):
     )
     list_filter = ('author', 'tags')
     search_fields = ('name',)
-    inlines = (IngredientRecipeInLine, TagRecipeInLine)
+    inlines = (IngredientRecipeInLine,)
 
     def count_favorite(self, obj):
         return obj.favorites.count()

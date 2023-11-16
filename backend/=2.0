@@ -1,0 +1,8 @@
+Requirement already satisfied: drf-base64 in c:\users\79643\appdata\local\programs\python\python39\lib\site-packages (2.0)
+Requirement already satisfied: Django>=2.0 in c:\users\79643\appdata\local\programs\python\python39\lib\site-packages (from drf-base64) (4.2.6)
+Requirement already satisfied: djangorestframework<4.0.0 in c:\users\79643\appdata\local\programs\python\python39\lib\site-packages (from drf-base64) (3.14.0)
+Requirement already satisfied: sqlparse>=0.3.1 in c:\users\79643\appdata\local\programs\python\python39\lib\site-packages (from Django>=2.0->drf-base64) (0.4.4)
+Requirement already satisfied: asgiref<4,>=3.6.0 in c:\users\79643\appdata\local\programs\python\python39\lib\site-packages (from Django>=2.0->drf-base64) (3.7.2)
+Requirement already satisfied: tzdata in c:\users\79643\appdata\local\programs\python\python39\lib\site-packages (from Django>=2.0->drf-base64) (2022.7)
+Requirement already satisfied: typing-extensions>=4 in c:\users\79643\appdata\local\programs\python\python39\lib\site-packages (from asgiref<4,>=3.6.0->Django>=2.0->drf-base64) (4.7.1)
+Requirement already satisfied: pytz in c:\users\79643\appdata\local\programs\python\python39\lib\site-packages (from djangorestframework<4.0.0->drf-base64) (2023.3)

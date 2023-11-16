@@ -1,15 +1,15 @@
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.core.exceptions import ValidationError
+from django.core.validators import (MinValueValidator,
+                                    MaxValueValidator,
+                                    RegexValidator)
 from django.db import models
 from colorfield.fields import ColorField
 
 from users.models import User
-
-MIN_COOKING_TIME = 1
-MAX_COOKING_TIME = 10080
-MIN_ING_AMOUNT = 1
-MAX_ING_AMOUNT = 5000
-NAME_LIMIT = 15
+from .constants import (MIN_COOKING_TIME,
+                        MAX_COOKING_TIME,
+                        MIN_ING_AMOUNT,
+                        MAX_ING_AMOUNT,
+                        NAME_LIMIT)
 
 
 class Ingredient(models.Model):
@@ -26,6 +26,7 @@ class Ingredient(models.Model):
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
         ordering = ('pk',)
+        unique_together = ('name', 'measurement_unit')
 
     def __str__(self):
         return self.name[:NAME_LIMIT]
@@ -42,6 +43,8 @@ class Tag(models.Model):
         default='#FF0000',
         max_length=7,
         unique=True,
+        validators=[RegexValidator(regex='^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$',
+                                   message='Введите цвет в формате HEX')],
     )
     slug = models.SlugField(
         'Уникальный слаг',
@@ -56,11 +59,6 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name[:NAME_LIMIT]
-
-    def clean(self):
-        color = self.color.upper()
-        if Tag.objects.filter(color=color).exists():
-            raise ValidationError('Тег такого цвета уже существует!')
 
 
 class Recipe(models.Model):
@@ -81,14 +79,13 @@ class Recipe(models.Model):
     text = models.TextField(
         'Описание',
     )
-    ingredients = models.ManyToManyField(
+    ingredient_quantities = models.ManyToManyField(
         Ingredient,
         through='IngredientRecipe',
-        verbose_name='Ингредиенты',
+        verbose_name='Ингредиенты с количеством',
     )
     tags = models.ManyToManyField(
         Tag,
-        through='TagRecipe',
         verbose_name='Теги',
     )
     cooking_time = models.PositiveSmallIntegerField(
@@ -134,7 +131,7 @@ class IngredientRecipe(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='recipe_ingredients',
+        related_name='+',
         verbose_name='Рецепт',
     )
     amount = models.PositiveSmallIntegerField(
@@ -155,28 +152,6 @@ class IngredientRecipe(models.Model):
         return f'{self.ingredient} {self.recipe}'
 
 
-class TagRecipe(models.Model):
-    tag = models.ForeignKey(
-        Tag,
-        on_delete=models.CASCADE,
-        verbose_name='Тег',
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        verbose_name='Рецепт',
-    )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['tag', 'recipe'],
-                                    name='unique_tag'),
-        ]
-
-    def __str__(self):
-        return f'{self.tag} {self.recipe}'
-
-
 class Favorite(models.Model):
     user = models.ForeignKey(
         User,
@@ -192,11 +167,7 @@ class Favorite(models.Model):
     class Meta:
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
-        default_related_name = 'favorites'
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'recipe'],
-                                    name='unique_favorite'),
-        ]
+        unique_together = ['user', 'recipe']
 
     def __str__(self):
         return f'{self.user} {self.recipe}'
@@ -217,11 +188,7 @@ class ShoppingCart(models.Model):
     class Meta:
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
-        default_related_name = 'shopping_carts'
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'recipe'],
-                                    name='unique_shopping_cart'),
-        ]
+        unique_together = ['user', 'recipe']
 
     def __str__(self):
         return f'{self.user} {self.recipe}'

@@ -23,7 +23,7 @@ from .serializers import (
     RecipeSerializer,
     RecipeCreateUpdateSerializer,
     RecipeCutSerializer,
-    CustomUserSerializer,
+    SubscriptionStatusSerializer,
     SubscribeSerializer
 )
 from .filters import IngredientSearchFilter, RecipeFilter
@@ -125,20 +125,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'ingredient__name',
             'ingredient__measurement_unit',
         ).annotate(amount=Sum('amount')))
-        pretty_ings = []
+        formatted_ingredients = []
         for ingredient in ingredients:
-            pretty_ings.append('{name} - {amount} {m_unit}\n'.format(
+            formatted_ingredients.append('{name} - {amount} {m_unit}\n'.format(
                 name=ingredient.get('ingredient__name'),
                 amount=ingredient.get('amount'),
                 m_unit=ingredient.get('ingredient__measurement_unit')
             ))
-        response = FileResponse(pretty_ings, content_type='text/plain')
+        response = FileResponse(formatted_ingredients,
+                                content_type='text/plain')
         return response
 
 
-class CustomUserViewSet(UserViewSet):
+class UserSubscriptionViewSet(UserViewSet):
     queryset = User.objects.all()
-    serializer_class = CustomUserSerializer
+    serializer_class = SubscriptionStatusSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
     @action(

@@ -1,45 +1,35 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
-from django.core.exceptions import ValidationError
+from .constants import MAX_EMAIL_LENGTH, MAX_USERNAME_LENGTH, MAX_NAME_LENGTH
 
 
 class User(AbstractUser):
     USER = 'user'
     ADMIN = 'admin'
-
-    ROLE_CHOICES = [
-        (USER, 'Пользователь'),
-        (ADMIN, 'Администратор'),
-    ]
+    NAME_REGEX = '^[a-zA-Zа-яА-ЯёЁ]+$'
+    name_validator = RegexValidator(
+        regex=NAME_REGEX,
+        message='Имя может содержать только буквы и пробелы.'
+    )
     email = models.EmailField(
         'Адрес эл.почты',
-        max_length=254,
+        max_length=MAX_EMAIL_LENGTH,
         unique=True,
     )
     username = models.CharField(
         'Имя пользователя',
-        max_length=150,
-        unique=True,
-        validators=[RegexValidator(regex=r'^[\w.@+-]+$')],
+        max_length=MAX_USERNAME_LENGTH,
+        unique=True
     )
     first_name = models.CharField(
         'Имя',
-        max_length=150,
+        max_length=MAX_NAME_LENGTH,
+        validators=[name_validator],
     )
     last_name = models.CharField(
         'Фамилия',
-        max_length=150,
-    )
-    password = models.CharField(
-        'Пароль',
-        max_length=150,
-    )
-    role = models.CharField(
-        'Права пользователя',
-        choices=ROLE_CHOICES,
-        default=USER,
-        max_length=5,
+        max_length=MAX_NAME_LENGTH,
     )
 
     class Meta:
@@ -49,10 +39,6 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
-
-    @property
-    def is_admin(self):
-        return self.role == self.ADMIN or self.is_staff
 
 
 class Subscribe(models.Model):
@@ -76,15 +62,6 @@ class Subscribe(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['user', 'author'],
                                     name='unique_subscriber'),
+            models.CheckConstraint(check=~models.Q(user=models.F('author')),
+                                   name='check_not_self_subscribe'),
         ]
-
-    def clean(self):
-        if self.user == self.author:
-            raise ValidationError(
-                {'title': 'Нельзя подписаться на самого себя!'}
-            )
-        super().clean()
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
