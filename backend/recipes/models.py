@@ -1,15 +1,11 @@
-from django.core.validators import (MinValueValidator,
-                                    MaxValueValidator,
+from colorfield.fields import ColorField
+from django.core.validators import (MaxValueValidator, MinValueValidator,
                                     RegexValidator)
 from django.db import models
-from colorfield.fields import ColorField
-
 from users.models import User
-from .constants import (MIN_COOKING_TIME,
-                        MAX_COOKING_TIME,
-                        MIN_ING_AMOUNT,
-                        MAX_ING_AMOUNT,
-                        NAME_LIMIT)
+
+from .constants import (MAX_COOKING_TIME, MAX_ING_AMOUNT, MIN_COOKING_TIME,
+                        MIN_ING_AMOUNT, NAME_LIMIT)
 
 
 class Ingredient(models.Model):

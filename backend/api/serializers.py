@@ -1,22 +1,11 @@
-from django.db import transaction
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers, validators
 from drf_extra_fields.fields import Base64ImageField
-
-from users.models import User, Subscribe
-from recipes.models import (
-    Tag,
-    Ingredient,
-    Recipe,
-    IngredientRecipe,
-    Favorite,
-    ShoppingCart,
-    MIN_COOKING_TIME,
-    MAX_COOKING_TIME,
-    MIN_ING_AMOUNT,
-    MAX_ING_AMOUNT,
-)
+from recipes.models import (MAX_COOKING_TIME, MAX_ING_AMOUNT, MIN_COOKING_TIME,
+                            MIN_ING_AMOUNT, Favorite, Ingredient,
+                            IngredientRecipe, Recipe, ShoppingCart, Tag)
+from rest_framework import serializers, validators
+from users.models import Subscribe, User
 
 
 class SubscriptionStatusSerializer(serializers.ModelSerializer):

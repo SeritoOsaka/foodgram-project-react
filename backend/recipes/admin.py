@@ -2,14 +2,8 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.forms.models import BaseInlineFormSet
 
-from .models import (
-    Ingredient,
-    Tag,
-    Recipe,
-    IngredientRecipe,
-    Favorite,
-    ShoppingCart
-)
+from .models import (Favorite, Ingredient, IngredientRecipe, Recipe,
+                     ShoppingCart, Tag)
 
 
 @admin.register(Ingredient)
