@@ -8,6 +8,6 @@ name_validator = RegexValidator(
     message='Имя может содержать только буквы и пробелы.'
 )
 last_name_validator = RegexValidator(
-        regex=LAST_NAME_REGEX,
-        message='Фамилия может содержать только буквы и пробелы.'
-    )
+    regex=LAST_NAME_REGEX,
+    message='Фамилия может содержать только буквы и пробелы.'
+)

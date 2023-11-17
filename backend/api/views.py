@@ -15,7 +15,7 @@ from .filters import IngredientSearchFilter, RecipeFilter
 from .permissions import IsAuthorOrAdminOrReadOnly
 from .serializers import (IngredientSerializer, RecipeCreateUpdateSerializer,
                           RecipeCutSerializer, RecipeSerializer,
-                          SubscribeSerializer, SubscriptionStatusSerializer,
+                          SubscribeSerializer,
                           TagSerializer)
 
 
