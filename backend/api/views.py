@@ -34,7 +34,11 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.prefetch_related(
+        'recipe_ingredients__ingredient',
+        'tags',
+        'author'
+    ).all()
     serializer_class = RecipeSerializer
     permission_classes = (
         permissions.IsAuthenticatedOrReadOnly,
@@ -42,13 +46,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
-
-    def get_queryset(self):
-        return Recipe.objects.prefetch_related(
-            'recipe_ingredients__ingredient',
-            'tags',
-            'author'
-        ).all()
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
@@ -126,10 +123,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return response
 
 
-class UserSubscriptionViewSet(UserViewSet):
-    queryset = User.objects.all()
-    serializer_class = SubscriptionStatusSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+class UserSubscriptionViewSet(viewsets.ViewSet):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user_viewset = UserViewSet()
 
     @action(
         detail=True,

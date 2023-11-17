@@ -2,27 +2,33 @@ from colorfield.fields import ColorField
 from django.core.validators import (MaxValueValidator, MinValueValidator,
                                     RegexValidator)
 from django.db import models
+from .validators import name_validator, color_validator
 from users.models import User
 
 from .constants import (MAX_COOKING_TIME, MAX_ING_AMOUNT, MIN_COOKING_TIME,
-                        MIN_ING_AMOUNT, NAME_LIMIT)
+                        MIN_ING_AMOUNT, NAME_LIMIT, NAME_MAX_LENGTH,
+                        COLOR_MAX_LENGTH)
 
 
 class Ingredient(models.Model):
     name = models.CharField(
         'Название',
-        max_length=200,
+        max_length=NAME_MAX_LENGTH,
+        validators=[name_validator],
     )
     measurement_unit = models.CharField(
         'Единицы измерения',
-        max_length=200,
+        max_length=NAME_MAX_LENGTH,
     )
 
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
         ordering = ('pk',)
-        unique_together = ('name', 'measurement_unit')
+        constraints = [
+            models.UniqueConstraint(fields=['name', 'measurement_unit'],
+                                    name='unique_name_measurement_unit')
+        ]
 
     def __str__(self):
         return self.name[:NAME_LIMIT]
@@ -32,19 +38,20 @@ class Tag(models.Model):
     name = models.CharField(
         'Название',
         unique=True,
-        max_length=200,
+        max_length=NAME_MAX_LENGTH,
+        validators=[color_validator],
     )
     color = ColorField(
         'Цвет',
         default='#FF0000',
-        max_length=7,
+        max_length=COLOR_MAX_LENGTH,
         unique=True,
-        validators=[RegexValidator(regex='^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$',
+        validators=[RegexValidator(regex='^#([A-Fa-f0-9]{3,6})$',
                                    message='Введите цвет в формате HEX')],
     )
     slug = models.SlugField(
         'Уникальный слаг',
-        max_length=200,
+        max_length=NAME_MAX_LENGTH,
         unique=True,
     )
 
@@ -66,7 +73,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         'Название',
-        max_length=200,
+        max_length=NAME_MAX_LENGTH,
     )
     image = models.ImageField(
         'Картинка',
@@ -75,10 +82,11 @@ class Recipe(models.Model):
     text = models.TextField(
         'Описание',
     )
-    ingredient_quantities = models.ManyToManyField(
-        Ingredient,
-        through='IngredientRecipe',
-        verbose_name='Ингредиенты с количеством',
+    ingredients = models.ManyToManyField(
+        verbose_name="Ингредиенты блюда",
+        related_name="recipes",
+        to=Ingredient,
+        through="recipes.IngredientRecipe",
     )
     tags = models.ManyToManyField(
         Tag,

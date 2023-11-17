@@ -1,18 +1,14 @@
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import RegexValidator
+from .validators import name_validator, last_name_validator
 from django.db import models
+from django.contrib.auth.validators import ASCIIUsernameValidator
 
 from .constants import MAX_EMAIL_LENGTH, MAX_NAME_LENGTH, MAX_USERNAME_LENGTH
 
 
 class User(AbstractUser):
-    USER = 'user'
     ADMIN = 'admin'
-    NAME_REGEX = '^[a-zA-Zа-яА-ЯёЁ]+$'
-    name_validator = RegexValidator(
-        regex=NAME_REGEX,
-        message='Имя может содержать только буквы и пробелы.'
-    )
+    name_validator = name_validator
     email = models.EmailField(
         'Адрес эл.почты',
         max_length=MAX_EMAIL_LENGTH,
@@ -21,7 +17,8 @@ class User(AbstractUser):
     username = models.CharField(
         'Имя пользователя',
         max_length=MAX_USERNAME_LENGTH,
-        unique=True
+        unique=True,
+        validators=[ASCIIUsernameValidator()]
     )
     first_name = models.CharField(
         'Имя',
@@ -31,6 +28,7 @@ class User(AbstractUser):
     last_name = models.CharField(
         'Фамилия',
         max_length=MAX_NAME_LENGTH,
+        validators=[last_name_validator],
     )
 
     class Meta:
