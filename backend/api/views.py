@@ -2,7 +2,6 @@ from django.db.models import Sum
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import UserViewSet
 from rest_framework import exceptions, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS
@@ -124,7 +123,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class UserSubscriptionViewSet(viewsets.GenericViewSet):
-    
     @action(
         detail=True,
         methods=['POST', 'DELETE'],
