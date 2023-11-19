@@ -1,13 +1,13 @@
 from colorfield.fields import ColorField
-from django.core.validators import (MaxValueValidator, MinValueValidator,
-                                    RegexValidator)
+from django.core.validators import (MaxValueValidator, MinValueValidator)
 from django.db import models
-from .validators import name_validator, color_validator
+
 from users.models import User
 
-from .constants import (MAX_COOKING_TIME, MAX_ING_AMOUNT, MIN_COOKING_TIME,
-                        MIN_ING_AMOUNT, NAME_LIMIT, NAME_MAX_LENGTH,
-                        COLOR_MAX_LENGTH)
+from .constants import (COLOR_MAX_LENGTH, MAX_COOKING_TIME, MAX_ING_AMOUNT,
+                        MIN_COOKING_TIME, MIN_ING_AMOUNT, NAME_LIMIT,
+                        NAME_MAX_LENGTH)
+from users.validators import color_validator, name_validator
 
 
 class Ingredient(models.Model):
@@ -24,7 +24,6 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
-        ordering = ('pk',)
         constraints = [
             models.UniqueConstraint(fields=['name', 'measurement_unit'],
                                     name='unique_name_measurement_unit')
@@ -39,15 +38,13 @@ class Tag(models.Model):
         'Название',
         unique=True,
         max_length=NAME_MAX_LENGTH,
-        validators=[color_validator],
     )
     color = ColorField(
         'Цвет',
         default='#FF0000',
         max_length=COLOR_MAX_LENGTH,
         unique=True,
-        validators=[RegexValidator(regex='^#([A-Fa-f0-9]{3,6})$',
-                                   message='Введите цвет в формате HEX')],
+        validators=[color_validator],
     )
     slug = models.SlugField(
         'Уникальный слаг',

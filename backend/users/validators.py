@@ -1,13 +1,13 @@
 from django.core.validators import RegexValidator
 
 NAME_REGEX = '^[a-zA-Zа-яА-ЯёЁ]+$'
-LAST_NAME_REGEX = '^[a-zA-Zа-яА-ЯёЁ]+$'
 
 name_validator = RegexValidator(
     regex=NAME_REGEX,
-    message='Имя может содержать только буквы и пробелы.'
+    message='Эти данные могут содержать только буквы и пробелы.'
 )
-last_name_validator = RegexValidator(
-    regex=LAST_NAME_REGEX,
-    message='Фамилия может содержать только буквы и пробелы.'
+color_validator = RegexValidator(
+    regex='^#([A-Fa-f0-9]{3,6})$',
+    message='Введите цвет в формате HEX.',
+    code='invalid_color'
 )

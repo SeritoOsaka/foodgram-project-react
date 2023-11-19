@@ -1,14 +1,12 @@
 from django.contrib.auth.models import AbstractUser
-from .validators import name_validator, last_name_validator
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
-from django.contrib.auth.validators import ASCIIUsernameValidator
 
 from .constants import MAX_EMAIL_LENGTH, MAX_NAME_LENGTH, MAX_USERNAME_LENGTH
+from .validators import name_validator
 
 
 class User(AbstractUser):
-    ADMIN = 'admin'
-    name_validator = name_validator
     email = models.EmailField(
         'Адрес эл.почты',
         max_length=MAX_EMAIL_LENGTH,
@@ -18,7 +16,7 @@ class User(AbstractUser):
         'Имя пользователя',
         max_length=MAX_USERNAME_LENGTH,
         unique=True,
-        validators=[ASCIIUsernameValidator()]
+        validators=[UnicodeUsernameValidator()]
     )
     first_name = models.CharField(
         'Имя',
@@ -28,7 +26,7 @@ class User(AbstractUser):
     last_name = models.CharField(
         'Фамилия',
         max_length=MAX_NAME_LENGTH,
-        validators=[last_name_validator],
+        validators=[name_validator],
     )
 
     class Meta:
