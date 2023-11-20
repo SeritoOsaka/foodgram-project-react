@@ -2,6 +2,7 @@ from django_filters import rest_framework as filters
 from rest_framework.filters import SearchFilter
 
 from recipes.models import Recipe, Tag
+from users.models import User
 
 
 class IngredientSearchFilter(SearchFilter):
@@ -9,6 +10,10 @@ class IngredientSearchFilter(SearchFilter):
 
 
 class RecipeFilter(filters.FilterSet):
+    author = filters.ModelChoiceFilter(
+        field_name='author',
+        queryset=User.objects.all()
+    )
     tags = filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',
         queryset=Tag.objects.all(),

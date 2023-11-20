@@ -1,26 +1,25 @@
 import csv
 
+from django.conf import settings
 from django.core.management import BaseCommand
 
 from recipes.models import Ingredient
 
 
 class Command(BaseCommand):
+    help = 'Загрузка из csv файла'
+
     def handle(self, *args, **kwargs):
-        file_path = 'data/ingredients.csv'
+        data_path = settings.BASE_DIR
+        file_path = f'{data_path}/data/ingredients.csv'
 
         try:
-            with open(file_path, encoding='UTF-8') as file:
-                ingredients_to_create = [
-                    Ingredient(name=row[0], measurement_unit=row[1])
-                    for row in csv.reader(file)
-                ]
-
-            Ingredient.objects.bulk_create(ingredients_to_create)
-            print('Импорт данных завершен!')
-
+            with open(file_path, 'r', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                Ingredient.objects.bulk_create(
+                    Ingredient(**data) for data in reader)
+            self.stdout.write(self.style.SUCCESS('Все ингредиенты загружены'))
         except FileNotFoundError:
-            print(f'File not found: {file_path}')
-
+            self.stdout.write(self.style.ERROR(f'Файл {file_path} не найден'))
         except Exception as error:
-            print(f'An error occurred: {error}')
+            self.stdout.write(self.style.ERROR(f'Произошла ошибка: {error}'))
