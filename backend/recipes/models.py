@@ -1,13 +1,15 @@
-from colorfield.fields import ColorField
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from colorfield.fields import ColorField
 from users.models import User
 from users.validators import color_validator, name_validator
 
-from .constants import (COLOR_MAX_LENGTH, MAX_COOKING_TIME, MAX_ING_AMOUNT,
-                        MIN_COOKING_TIME, MIN_ING_AMOUNT, NAME_LIMIT,
-                        NAME_MAX_LENGTH)
+from .constants import (
+    COLOR_MAX_LENGTH, MAX_COOKING_TIME, MAX_ING_AMOUNT,
+    MIN_COOKING_TIME, MIN_ING_AMOUNT, NAME_LIMIT,
+    NAME_MAX_LENGTH
+)
 
 
 class Ingredient(models.Model):
@@ -155,12 +157,13 @@ class Favorite(models.Model):
         User,
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
-        related_name='favorites'
+        related_name='+'
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
         verbose_name='Изб. рецепт',
+        related_name='favorites'
     )
 
     class Meta:
@@ -180,12 +183,13 @@ class ShoppingCart(models.Model):
         User,
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
-        related_name='shopping_carts'
+        related_name='+'
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
         verbose_name='Изб. рецепт',
+        related_name='shopping_carts'
     )
 
     class Meta:
