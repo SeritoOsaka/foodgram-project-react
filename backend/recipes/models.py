@@ -5,7 +5,6 @@ from colorfield.fields import ColorField
 
 from users.models import User
 from users.validators import color_validator, name_validator
-
 from .constants import (COLOR_MAX_LENGTH, MAX_COOKING_TIME, MAX_ING_AMOUNT,
                         MIN_COOKING_TIME, MIN_ING_AMOUNT, NAME_LIMIT,
                         NAME_MAX_LENGTH)
